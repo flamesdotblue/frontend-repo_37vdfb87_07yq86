@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Cloud, Database, ShieldCheck, Wrench, LineChart, Bot, LayoutDashboard, BadgeCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Cloud, ShieldCheck, Wrench, LineChart, Bot, LayoutDashboard, BadgeCheck } from 'lucide-react';
+import DetailPage from './DetailPage';
 
 const SERVICES = [
   { key: 'dx', name: 'Digital Transformation', icon: LayoutDashboard, desc: 'Strategy to execution for customer, employee, and partner journeys.' },
@@ -51,6 +52,27 @@ const SERVICE_DETAILS = {
 
 export default function Services() {
   const [active, setActive] = useState('dx');
+  const [detailSlug, setDetailSlug] = useState(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const hash = window.location.hash.replace('#', '');
+      const parts = hash.split('/').filter(Boolean);
+      if (parts[0] === 'service' && parts[1]) return setDetailSlug(parts[1]);
+      setDetailSlug(null);
+    };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+
+  const openDetail = (slug) => {
+    window.location.hash = `#/service/${slug}`;
+  };
+
+  const closeDetail = () => {
+    window.location.hash = '#services';
+  };
 
   return (
     <section id="services" className="relative scroll-mt-20 bg-zinc-50">
@@ -66,9 +88,8 @@ export default function Services() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {SERVICES.map(({ key, name, icon: Icon, desc }) => (
-              <button
+              <div
                 key={key}
-                onClick={() => setActive(key)}
                 className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:shadow-sm ${
                   active === key ? 'border-zinc-900 bg-white' : 'border-zinc-200 bg-white'
                 }`}
@@ -77,8 +98,12 @@ export default function Services() {
                 <div>
                   <div className="font-medium text-zinc-900">{name}</div>
                   <div className="text-sm text-zinc-600">{desc}</div>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={() => setActive(key)} className="text-sm text-zinc-800 underline-offset-2 hover:underline">Overview</button>
+                    <button onClick={() => openDetail(key)} className="text-sm text-zinc-800 underline-offset-2 hover:underline">View details</button>
+                  </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
@@ -119,6 +144,10 @@ export default function Services() {
           </div>
         </div>
       </div>
+
+      {detailSlug && (
+        <DetailPage type="service" slug={detailSlug} onClose={closeDetail} />
+      )}
     </section>
   );
 }

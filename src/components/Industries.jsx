@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Building2, HeartPulse, Factory, ShoppingBag, Banknote, Radio, Hotel, Shield, Cpu } from 'lucide-react';
+import DetailPage from './DetailPage';
 
 const INDUSTRIES = [
   { key: 'bfs', name: 'Banking & Financial Services', icon: Banknote, blurb: 'Digital core modernization, payments, risk & compliance.' },
@@ -90,6 +91,29 @@ const DETAILS = {
 
 export default function Industries() {
   const [active, setActive] = useState('bfs');
+  const [detailSlug, setDetailSlug] = useState(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const hash = window.location.hash.replace('#', '');
+      const parts = hash.split('/').filter(Boolean);
+      if (parts[0] === '' || parts.length === 0) return setDetailSlug(null);
+      if (parts[0] === '' || parts[0] === 'impact') return setDetailSlug(null);
+      if (parts[0] === 'industry' && parts[1]) return setDetailSlug(parts[1]);
+      setDetailSlug(null);
+    };
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+
+  const openDetail = (slug) => {
+    window.location.hash = `#/industry/${slug}`;
+  };
+
+  const closeDetail = () => {
+    window.location.hash = '#industries';
+  };
 
   return (
     <section id="industries" className="relative scroll-mt-20 bg-white">
@@ -101,9 +125,8 @@ export default function Industries() {
 
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {INDUSTRIES.map(({ key, name, icon: Icon, blurb }) => (
-                <button
+                <div
                   key={key}
-                  onClick={() => setActive(key)}
                   className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:shadow-sm ${
                     active === key ? 'border-zinc-900 bg-zinc-50' : 'border-zinc-200'
                   }`}
@@ -112,8 +135,12 @@ export default function Industries() {
                   <div>
                     <div className="font-medium text-zinc-900">{name}</div>
                     <div className="text-sm text-zinc-600">{blurb}</div>
+                    <div className="mt-3 flex gap-2">
+                      <button onClick={() => setActive(key)} className="text-sm text-zinc-800 underline-offset-2 hover:underline">Overview</button>
+                      <button onClick={() => openDetail(key)} className="text-sm text-zinc-800 underline-offset-2 hover:underline">View details</button>
+                    </div>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -131,6 +158,10 @@ export default function Industries() {
           </div>
         </div>
       </div>
+
+      {detailSlug && (
+        <DetailPage type="industry" slug={detailSlug} onClose={closeDetail} />
+      )}
     </section>
   );
 }
